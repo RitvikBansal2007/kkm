@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khel Khel Mein — Space. Set. Play.</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@400;500;600;700&family=Island+Moments&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── RESET ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── TOKENS ─────────────────────────────────────────────── */
+    :root {
+      --forest:       #1e3a2f;
+      --forest-mid:   #234535;
+      --forest-light: #264d3b;
+      --cream:        #f0ebe0;
+      --gold:         #c9a84c;
+      --gold-light:   #e2c077;
+      --gold-dim:     rgba(201,168,76,0.72);
+      --white:        #ffffff;
+      --text-dark:    #1a2e22;
+      --text-mid:     #3d5245;
+      --text-faint:   rgba(240,235,224,0.78);
+      --r:            12px;
+      --r-lg:         18px;
+      --nav-h:        64px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text-dark);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--cream); }
+    ::-webkit-scrollbar-thumb { background: var(--forest); border-radius: 4px; }
+
+    /* ── PAGE SYSTEM ────────────────────────────────────────── */
+    .page { display: none; min-height: 100vh; padding-top: var(--nav-h); }
+    .page.active { display: block; }
+
+    /* ── NAV ────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: var(--nav-h);
+      background: var(--forest);
+      box-shadow: 0 2px 24px rgba(0,0,0,0.22);
+    }
+    .nav-logo { display: flex; align-items: center; cursor: pointer; flex-shrink: 0; overflow: visible; }
+    .nav-logo img { height: 80px; width: auto; object-fit: contain; }
+    .nav-links { display: flex; gap: 44px; }
+    .nav-links a {
+      color: var(--cream); text-decoration: none;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 16px; font-weight: 500; letter-spacing: 0.06em;
+      cursor: pointer; transition: color 0.2s; position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 2px; background: var(--gold);
+      transform: scaleX(0); transition: transform 0.22s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-links a:hover::after,
+    .nav-links a.active::after { transform: scaleX(1); }
+    .nav-links a.active { color: var(--gold); }
+
+    /* ── SHARED ─────────────────────────────────────────────── */
+    .section-title {
+      font-family: 'Antonio', sans-serif;
+      font-size: 30px; font-weight: 700;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--text-dark); margin-bottom: 48px;
+    }
+    .btn-gold {
+      display: inline-block; background: var(--gold); color: var(--forest);
+      font-weight: 700; font-size: 15px; letter-spacing: 0.06em;
+      padding: 14px 42px; border-radius: 50px; border: none;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-gold:hover {
+      background: var(--gold-light); transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(201,168,76,0.35);
+    }
+    footer {
+      background: var(--forest); color: var(--cream);
+      text-align: center; padding: 26px 60px;
+      font-size: 13px; letter-spacing: 0.04em; opacity: 0.92;
+    }
+
+    /* placeholder shown until you drop real photos in */
+    .img-ph {
+      background: var(--forest-light);
+      border: 1.5px dashed rgba(201,168,76,0.35);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold-dim); font-size: 12px;
+      font-style: italic; text-align: center; padding: 16px;
+    }
+
+    /* scroll-reveal */
+    .will-animate {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .will-animate.in-view { opacity: 1; transform: translateY(0); }
+
+    /* hero fade-up on load */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.65s ease both; }
+    .d1 { animation-delay: 0.08s; }
+    .d2 { animation-delay: 0.18s; }
+    .d3 { animation-delay: 0.30s; }
+    .d4 { animation-delay: 0.42s; }
+    .d5 { animation-delay: 0.54s; }
+
+    /* ═══════════════════════════════════════
+       HOME — HERO
+    ═══════════════════════════════════════ */
+    .hero {
+      background: var(--forest); text-align: center;
+      padding: 52px 40px 48px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.10) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-icon { margin-bottom: 20px; }
+    .hero-icon img { width: 340px; height: auto; object-fit: contain; }
+
+    /* "KHEL KHEL MEIN" */
+    .hero-brand {
+      font-family: 'Antonio', sans-serif;
+      font-size: 46px; font-weight: 700;
+      color: var(--gold); letter-spacing: 0.14em;
+      text-transform: uppercase; line-height: 1.05;
+    }
+    /* "game design consulting" */
+    .hero-sub {
+      font-family: 'Island Moments', cursive;
+      font-size: 28px; font-weight: 400;
+      color: var(--cream); opacity: 0.88;
+      margin: 8px 0 22px;
+    }
+    /* "SPACE. SET. PLAY." */
+    .hero-headline {
+      font-family: 'Antonio', sans-serif;
+      font-size: 58px; font-weight: 700;
+      color: var(--white); letter-spacing: 0.22em;
+      text-transform: uppercase; line-height: 1.1; margin-bottom: 20px;
+    }
+    .hero-desc {
+      max-width: 580px; margin: 0 auto 28px;
+      color: var(--cream); opacity: 0.82;
+      font-size: 16px; line-height: 1.75; font-weight: 400;
+    }
+
+    /* hero gallery — 3 photos
+       FILES: images/hero-1.jpg | images/hero-2.jpg | images/hero-3.jpg
+       Size:  900×600 px, JPEG, ~200 KB each                            */
+    .hero-gallery {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 14px; max-width: 880px; margin: 52px auto 0;
+    }
+    .hero-gallery img, .hero-gallery .img-ph {
+      width: 100%; height: 210px; border-radius: var(--r);
+      object-fit: cover; display: block;
+    }
+
+    /* ═══════════════════════════════════════
+       HOME — STATS
+    ═══════════════════════════════════════ */
+    .stats-section { background: var(--cream); padding: 80px 60px; text-align: center; }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 18px; max-width: 960px; margin: 0 auto;
+    }
+    .stat-card {
+      background: var(--forest); border-radius: var(--r);
+      padding: 38px 18px 34px; color: var(--cream);
+    }
+    .stat-number {
+      font-family: 'Antonio', sans-serif;
+      font-size: 48px; font-weight: 700;
+      color: var(--gold); line-height: 1; margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--gold-light); margin-bottom: 12px;
+    }
+    .stat-desc { font-size: 13px; line-height: 1.55; color: var(--text-faint); }
+
+    /* ═══════════════════════════════════════
+       HOME — TESTIMONIALS
+    ═══════════════════════════════════════ */
+    .testimonials-section { background: var(--cream); padding: 0 60px 80px; }
+    .testimonials-section .section-title {
+      color: var(--gold); text-align: center; padding-top: 70px;
+    }
+    .testimonials-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 20px; max-width: 960px; margin: 0 auto;
+    }
+    .testimonial-card {
+      background: var(--forest); border-radius: var(--r);
+      padding: 34px 30px; color: var(--cream);
+      display: flex; flex-direction: column;
+    }
+    .testimonial-text {
+      font-family: 'DM Sans', sans-serif; font-style: italic;
+      font-size: 15px; line-height: 1.75; flex: 1;
+      margin-bottom: 26px; opacity: 0.95;
+    }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .author-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--gold); color: var(--forest);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Antonio', sans-serif;
+      font-weight: 700; font-size: 15px; flex-shrink: 0;
+    }
+    .author-name { font-weight: 600; font-size: 14px; color: var(--white); }
+    .author-city { font-size: 12px; color: var(--text-faint); margin-top: 2px; }
+
+    /* ═══════════════════════════════════════
+       ABOUT PAGE
+    ═══════════════════════════════════════ */
+    .about-header { background: var(--cream); text-align: center; padding: 60px 60px 0; }
+    .about-header .section-title { font-size: 38px; margin-bottom: 36px; }
+
+    /* FILE: images/about-hero.jpg  —  1200×500 px, JPEG */
+    .about-hero-img {
+      max-width: 900px; width: 100%; height: 320px;
+      border-radius: var(--r); object-fit: cover; display: block; margin: 0 auto;
+    }
+    .about-hero-ph {
+      max-width: 900px; height: 320px; background: var(--forest);
+      border-radius: var(--r); margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold-dim); font-size: 14px; font-style: italic;
+    }
+
+    .vision-mission {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+      max-width: 900px; margin: 48px auto 0; padding: 0 60px;
+    }
+    .vm-card {
+      background: var(--white); border: 1px solid rgba(30,58,47,0.1);
+      border-radius: var(--r); padding: 36px 32px;
+    }
+    .vm-card h3 {
+      font-family: 'Antonio', sans-serif; font-size: 17px; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--text-dark); margin-bottom: 14px;
+    }
+    .vm-card p { font-size: 14px; line-height: 1.78; color: var(--text-mid); }
+
+    .problem-section {
+      background: var(--forest); margin: 48px 60px 0;
+      border-radius: var(--r); padding: 52px 60px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;
+    }
+    .problem-section h3 {
+      font-family: 'Antonio', sans-serif; font-size: 24px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 26px;
+    }
+    .problem-bullets { list-style: none; }
+    .problem-bullets li {
+      color: var(--white); font-size: 18px; font-weight: 700;
+      padding: 6px 0 6px 22px; position: relative;
+    }
+    .problem-bullets li::before {
+      content: ''; position: absolute; left: 0; top: 50%;
+      transform: translateY(-50%); width: 4px; height: 22px;
+      background: var(--gold); border-radius: 2px;
+    }
+    .problem-sub-list { list-style: none; margin-top: 22px; }
+    .problem-sub-list li {
+      color: var(--text-faint); font-size: 14px;
+      padding: 5px 0 5px 18px; position: relative;
+    }
+    .problem-sub-list li::before {
+      content: ''; position: absolute; left: 0; top: 50%;
+      transform: translateY(-50%); width: 3px; height: 16px;
+      background: var(--gold); border-radius: 2px;
+    }
+    .problem-right p { color: var(--cream); font-size: 15px; line-height: 1.82; }
+    .problem-right p + p { margin-top: 18px; }
+
+    .why-exist {
+      background: var(--forest-mid); margin: 20px 60px 0;
+      border-radius: var(--r); padding: 58px 60px; text-align: center;
+    }
+    .why-exist h3 {
+      font-family: 'Antonio', sans-serif; font-size: 24px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 22px;
+    }
+    .why-exist p {
+      color: var(--cream); font-size: 16px; line-height: 1.82;
+      max-width: 680px; margin: 0 auto; opacity: 0.9;
+    }
+
+    /* about gallery — 3 photos
+       FILES: images/about-gallery-1.jpg | -2.jpg | -3.jpg
+       Size:  600×360 px, JPEG, ~140 KB each                */
+    .about-gallery {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 14px; padding: 36px 60px 72px;
+    }
+    .about-gallery img, .about-gallery .img-ph {
+      width: 100%; height: 188px; border-radius: var(--r);
+      object-fit: cover; display: block;
+    }
+
+    /* ═══════════════════════════════════════
+       SERVICES PAGE
+    ═══════════════════════════════════════ */
+    .game-portfolio-section { padding: 60px 60px 24px; text-align: center; }
+
+    /* game cards — 6 photos
+       FILES: images/game-snakes-ladders.jpg | game-chase.jpg |
+              game-monopoly.jpg | game-scrabble.jpg |
+              game-ludo.jpg | game-jenga.jpg
+       Size:  640×480 px, JPEG, ~160 KB each                  */
+    .games-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 16px; max-width: 960px; margin: 0 auto;
+    }
+    .game-card {
+      border-radius: var(--r); overflow: hidden;
+      position: relative; height: 240px; background: var(--forest);
+    }
+    .game-card img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .game-card-ph {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold-dim); font-size: 12px;
+      font-style: italic; text-align: center; padding: 20px;
+      background: var(--forest-light);
+      border: 1.5px dashed rgba(201,168,76,0.3);
+    }
+    .game-card-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: var(--forest);
+      padding: 12px 18px;
+      display: flex; align-items: center;
+    }
+    .game-card-name {
+      font-family: 'Antonio', sans-serif;
+      font-size: 18px; font-weight: 700;
+      color: var(--gold); letter-spacing: 0.06em;
+    }
+
+    .why-choose-section { padding: 72px 60px 0; text-align: center; }
+    .why-cards {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 16px; max-width: 960px; margin: 0 auto;
+    }
+    .why-card {
+      background: var(--forest); border-radius: var(--r);
+      padding: 38px 28px; text-align: center;
+    }
+    .why-card h4 {
+      font-family: 'Antonio', sans-serif;
+      font-size: 16px; font-weight: 700;
+      color: var(--gold); letter-spacing: 0.06em;
+      margin-bottom: 12px; line-height: 1.4;
+    }
+    .why-card p { color: var(--cream); font-size: 13px; line-height: 1.65; opacity: 0.82; }
+
+    .how-section { padding: 72px 60px 80px; text-align: center; }
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 16px; max-width: 960px; margin: 0 auto;
+    }
+    .step-card {
+      background: var(--white); border: 1.5px solid rgba(30,58,47,0.1);
+      border-radius: var(--r); padding: 38px 18px 34px; text-align: center;
+    }
+    .step-num {
+      font-family: 'Antonio', sans-serif;
+      font-size: 46px; font-weight: 700;
+      color: var(--gold); line-height: 1; margin-bottom: 12px;
+    }
+    .step-title { font-weight: 700; font-size: 14px; color: var(--text-dark); margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: var(--text-mid); line-height: 1.55; }
+
+    /* ═══════════════════════════════════════
+       CONTACT PAGE
+    ═══════════════════════════════════════ */
+    .contact-section {
+      min-height: calc(100vh - var(--nav-h));
+      display: flex; align-items: center; justify-content: center;
+      padding: 80px 40px; background: var(--cream);
+    }
+    .contact-inner { max-width: 720px; width: 100%; text-align: center; }
+    .contact-inner .section-title { font-size: 46px; margin-bottom: 10px; font-family: 'Antonio', sans-serif; }
+    .contact-sub { font-size: 16px; color: var(--text-mid); margin-bottom: 50px; }
+
+    .contact-card {
+      background: var(--white); border-radius: var(--r-lg);
+      box-shadow: 0 6px 50px rgba(0,0,0,0.08);
+      padding: 52px 52px 48px; text-align: left;
+    }
+    .contact-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-bottom: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-mid);
+    }
+    .form-group input, .form-group textarea {
+      border: 1.5px solid rgba(30,58,47,0.15); border-radius: 8px;
+      padding: 14px 16px; font-family: 'DM Sans', sans-serif;
+      font-size: 15px; color: var(--text-dark);
+      background: var(--cream); outline: none;
+      width: 100%; resize: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input::placeholder, .form-group textarea::placeholder {
+      color: rgba(30,58,47,0.38);
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.14);
+    }
+    .form-group textarea { height: 138px; }
+    .form-spacer { margin-bottom: 16px; }
+
+    .btn-submit {
+      width: 100%; margin-top: 10px;
+      background: var(--forest); color: var(--gold);
+      border: none; border-radius: 8px; padding: 17px;
+      font-family: 'DM Sans', sans-serif; font-size: 15px;
+      font-weight: 700; letter-spacing: 0.07em;
+      cursor: pointer; transition: background 0.2s, transform 0.15s;
+    }
+    .btn-submit:hover { background: var(--forest-light); transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .form-status {
+      margin-top: 16px; padding: 14px 18px;
+      border-radius: 8px; font-size: 14px; font-weight: 500; display: none;
+    }
+    .form-status.success {
+      display: block; background: rgba(30,58,47,0.08);
+      color: var(--forest); border: 1px solid rgba(30,58,47,0.2);
+    }
+    .form-status.error {
+      display: block; background: rgba(180,40,40,0.07);
+      color: #7a1c1c; border: 1px solid rgba(180,40,40,0.18);
+    }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════ */
+
+    /* Large laptops / small desktops */
+    @media (max-width: 1100px) {
+      .hero { padding: 56px 32px 48px; }
+      .hero-headline { font-size: 46px; }
+      .hero-brand { font-size: 38px; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .problem-section { margin: 48px 32px 0; padding: 40px 40px; }
+      .why-exist { margin: 20px 32px 0; }
+      .about-gallery { padding: 36px 32px 72px; }
+      .vision-mission { padding: 0 32px; }
+    }
+
+    /* Tablets */
+    @media (max-width: 860px) {
+      :root { --nav-h: 60px; }
+      nav { padding: 0 28px; }
+      .nav-links { gap: 22px; }
+      .hero { padding: 44px 24px 40px; }
+      .hero-brand { font-size: 32px; }
+      .hero-sub { font-size: 22px; }
+      .hero-headline { font-size: 36px; letter-spacing: 0.12em; }
+      .hero-desc { font-size: 15px; margin-bottom: 32px; }
+      .btn-gold { padding: 12px 32px; font-size: 14px; }
+      .hero-gallery { grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 36px; }
+      .hero-gallery img { height: 150px; }
+      .stats-section { padding: 60px 32px; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); gap: 14px; }
+      .testimonials-section { padding: 0 32px 60px; }
+      .testimonials-grid { grid-template-columns: 1fr; gap: 16px; }
+      .about-header { padding: 44px 32px 0; }
+      .vision-mission { grid-template-columns: 1fr; padding: 0 32px; }
+      .problem-section { grid-template-columns: 1fr; gap: 32px; margin: 32px 24px 0; padding: 36px 28px; }
+      .why-exist { margin: 16px 24px 0; padding: 40px 28px; }
+      .about-gallery { grid-template-columns: repeat(3,1fr); padding: 28px 24px 56px; }
+      .game-portfolio-section { padding: 44px 24px 20px; }
+      .games-grid { grid-template-columns: repeat(2,1fr); }
+      .why-choose-section { padding: 52px 24px 0; }
+      .why-cards { grid-template-columns: 1fr; }
+      .how-section { padding: 52px 24px 60px; }
+      .steps-grid { grid-template-columns: repeat(2,1fr); }
+      .contact-card { padding: 36px 28px 32px; }
+      footer { padding: 22px 32px; }
+    }
+
+    /* Mobile */
+    @media (max-width: 560px) {
+      nav { padding: 0 18px; }
+      .nav-links { gap: 16px; }
+      .nav-links a { font-size: 13px; }
+      .hero { padding: 36px 18px 36px; }
+      .hero-brand { font-size: 26px; letter-spacing: 0.08em; }
+      .hero-sub { font-size: 20px; }
+      .hero-headline { font-size: 28px; letter-spacing: 0.08em; }
+      .hero-desc { font-size: 14px; }
+      .hero-gallery { grid-template-columns: 1fr; }
+      .hero-gallery img { height: 200px; }
+      .section-title { font-size: 22px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-number { font-size: 36px; }
+      .about-gallery { grid-template-columns: 1fr; }
+      .about-gallery img { height: 200px; }
+      .games-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr 1fr; }
+      .contact-row { grid-template-columns: 1fr; }
+      .contact-card { padding: 28px 18px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════ NAV ════════════ -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')" role="button" tabindex="0" aria-label="Home">
+    <img src="images/logo.png" alt="Khel Khel Mein" style="width:46px;height:46px;object-fit:contain;">
+  </div>
+  <div class="nav-links">
+    <a id="nav-home"     class="active" onclick="showPage('home')">Home</a>
+    <a id="nav-about"             onclick="showPage('about')">About</a>
+    <a id="nav-services"          onclick="showPage('services')">Services</a>
+    <a id="nav-contact"           onclick="showPage('contact')">Contact</a>
+  </div>
+</nav>
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE: HOME
+════════════════════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+
+  <section class="hero">
+    <div class="hero-icon fade-up">
+      <img src="images/logo.png" alt="Khel Khel Mein" style="width:90px;height:90px;object-fit:contain;">
+    </div>
+    <div class="hero-brand fade-up d1">Khel Khel Mein</div>
+    <div class="hero-sub   fade-up d1">game design consulting</div>
+    <div class="hero-headline fade-up d2">Space. Set. Play.</div>
+    <p class="hero-desc fade-up d3">
+      We design, install, and manage temporary life-sized game experiences for heritage
+      and luxury resorts, turning dead spaces into their most photographed and most
+      reviewed feature.
+    </p>
+    <button class="btn-gold fade-up d4" onclick="showPage('contact')">Get Started</button>
+
+    <!--
+      HERO GALLERY — replace each .img-ph with an <img> tag once photos are ready:
+        <img src="images/hero-1.jpg" alt="Life-sized Scrabble" loading="lazy">
+        <img src="images/hero-2.jpg" alt="Giant Monopoly courtyard" loading="lazy">
+        <img src="images/hero-3.jpg" alt="Snakes and Ladders resort lawn" loading="lazy">
+      Recommended: 900x600 px, JPEG, ~200 KB each
+    -->
+    <div class="hero-gallery fade-up d5">
+      <img src="images/hero-1.jpg" alt="Life-sized Scrabble floor installation" loading="lazy">
+      <img src="images/hero-2.jpg" alt="Giant Monopoly courtyard" loading="lazy">
+      <img src="images/hero-3.jpg" alt="Snakes and Ladders resort lawn" loading="lazy">
+    </div>
+  </section>
+
+  <section class="stats-section">
+    <h2 class="section-title">The Numbers Speak</h2>
+    <div class="stats-grid">
+      <div class="stat-card will-animate">
+        <div class="stat-number">6+</div>
+        <div class="stat-label">Hours</div>
+        <div class="stat-desc">average daily screen time for urban Indians <em>(IAMAI 2023)</em></div>
+      </div>
+      <div class="stat-card will-animate">
+        <div class="stat-number">23%</div>
+        <div class="stat-label">Growth</div>
+        <div class="stat-desc">resort supply growth in India, 2019&ndash;2023 <em>(JLL India)</em></div>
+      </div>
+      <div class="stat-card will-animate">
+        <div class="stat-number">&#8377;0</div>
+        <div class="stat-label">Revenue</div>
+        <div class="stat-desc">generated from dead corridors &amp; wait zones</div>
+      </div>
+      <div class="stat-card will-animate">
+        <div class="stat-number">82%</div>
+        <div class="stat-label">Guests</div>
+        <div class="stat-desc">check reviews before booking <em>(MakeMyTrip 2022)</em></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="testimonials-section">
+    <h2 class="section-title">What Guests Say</h2>
+    <div class="testimonials-grid">
+      <div class="testimonial-card will-animate">
+        <p class="testimonial-text">"The giant Ludo game was the highlight of our stay! Our kids made friends with other families and we all played together. Best resort experience ever."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">P</div>
+          <div><div class="author-name">Priya Sharma</div><div class="author-city">Mumbai</div></div>
+        </div>
+      </div>
+      <div class="testimonial-card will-animate">
+        <p class="testimonial-text">"We have stayed at luxury resorts around the world, but this was different. The games brought everyone together in a way I have never seen before."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">R</div>
+          <div><div class="author-name">Rajesh Patel</div><div class="author-city">Ahmedabad</div></div>
+        </div>
+      </div>
+      <div class="testimonial-card will-animate">
+        <p class="testimonial-text">"Instagram-worthy AND actually fun? That is rare. We spent hours playing Snakes &amp; Ladders instead of scrolling on our phones."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">N</div>
+          <div><div class="author-name">Neha Gupta</div><div class="author-city">Delhi</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>&copy; 2026 Khel Khel Mein. India&rsquo;s only spatial play studio.</footer>
+</div><!-- /page-home -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE: ABOUT
+════════════════════════════════════════════════════════ -->
+<div id="page-about" class="page">
+
+  <div class="about-header">
+    <h1 class="section-title">About Khel Khel Mein</h1>
+    <!--
+      Replace the placeholder below with the real hero image when ready:
+        <img src="images/about-hero.jpg" alt="Heritage palace courtyard" class="about-hero-img" loading="lazy">
+      Recommended: 1200x500 px, JPEG, ~300 KB
+    -->
+    <img src="images/about-hero.jpg" alt="Heritage palace courtyard panorama" class="about-hero-img" loading="lazy">
+  </div>
+
+  <div class="vision-mission">
+    <div class="vm-card will-animate">
+      <h3>Our Vision</h3>
+      <p>To transform every luxury resort in India into a destination where heritage meets play, where cultural games become the most memorable part of a guest's stay, and where dead spaces become revenue-generating social hubs.</p>
+    </div>
+    <div class="vm-card will-animate">
+      <h3>Our Mission</h3>
+      <p>We design, install, and manage life-sized game experiences rooted in Indian culture. We help resorts turn underutilized spaces into their most photographed feature, creating authentic moments of connection that guests actually want to share.</p>
+    </div>
+  </div>
+
+  <div class="problem-section">
+    <div>
+      <h3>The Problem</h3>
+      <ul class="problem-bullets">
+        <li>Dead spaces.</li>
+        <li>Fragmented guests.</li>
+        <li>Missed revenue.</li>
+      </ul>
+      <ul class="problem-sub-list" style="margin-top:26px;">
+        <li>Resort Spatial Deadweight</li>
+        <li>The Check-In Limbo</li>
+        <li>Digital Overload Paradox</li>
+        <li>The Afternoon Dead Zone</li>
+      </ul>
+    </div>
+    <div class="problem-right">
+      <p>Most luxury resorts were designed for a pre-smartphone guest.</p>
+      <p>Today's guest checks in, checks Instagram, and complains there was nothing to do. Dead corridors, empty lawns, and underutilized courtyards represent massive missed opportunities for engagement and revenue.</p>
+    </div>
+  </div>
+
+  <div class="why-exist">
+    <h3>Why We Exist</h3>
+    <p>In an age of digital overload, we believe in the power of physical play to create genuine human connection. Every game we install carries centuries of cultural heritage, turning your property into a living museum of play where guests put down their phones and make real memories.</p>
+  </div>
+
+  <!--
+    ABOUT GALLERY — replace each .img-ph when photos are ready:
+      <img src="images/about-gallery-1.jpg" alt="Heritage Haveli, Rajasthan" loading="lazy">
+      <img src="images/about-gallery-2.jpg" alt="Luxury Resort, Goa" loading="lazy">
+      <img src="images/about-gallery-3.jpg" alt="Palace Courtyard, Udaipur" loading="lazy">
+    Recommended: 600x360 px, JPEG, ~140 KB each
+  -->
+  <div class="about-gallery">
+    <img src="images/about-gallery-1.jpg" alt="Heritage Haveli, Rajasthan" loading="lazy">
+    <img src="images/about-gallery-2.jpg" alt="Luxury Resort, Goa" loading="lazy">
+    <img src="images/about-gallery-3.jpg" alt="Palace Courtyard, Udaipur" loading="lazy">
+  </div>
+
+  <footer>&copy; 2026 Khel Khel Mein. India&rsquo;s only spatial play studio.</footer>
+</div><!-- /page-about -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE: SERVICES
+════════════════════════════════════════════════════════ -->
+<div id="page-services" class="page">
+
+  <section class="game-portfolio-section">
+    <h2 class="section-title">Game Portfolio</h2>
+    <!--
+      GAME CARDS — replace each .game-card-ph with an <img> tag when photos are ready.
+      Drop the <img> tag BEFORE the .game-card-overlay div inside each .game-card:
+        <img src="images/game-snakes-ladders.jpg" alt="Snakes and Ladders">
+      FILES (640x480 px, JPEG, ~160 KB each):
+        game-snakes-ladders.jpg | game-chase.jpg | game-monopoly.jpg
+        game-scrabble.jpg | game-ludo.jpg | game-jenga.jpg
+    -->
+    <div class="games-grid">
+      <div class="game-card will-animate">
+        <img src="images/game-snakes-ladders.jpg" alt="Snakes and Ladders">
+        <div class="game-card-overlay"><span class="game-card-name">Snake &amp; Ladders</span></div>
+      </div>
+      <div class="game-card will-animate">
+        <img src="images/game-chase.jpg" alt="Chase">
+        <div class="game-card-overlay"><span class="game-card-name">Chase</span></div>
+      </div>
+      <div class="game-card will-animate">
+        <img src="images/game-monopoly.jpg" alt="Giant Monopoly">
+        <div class="game-card-overlay"><span class="game-card-name">Monopoly</span></div>
+      </div>
+      <div class="game-card will-animate">
+        <img src="images/game-scrabble.jpg" alt="Life-sized Scrabble">
+        <div class="game-card-overlay"><span class="game-card-name">Scrabble</span></div>
+      </div>
+      <div class="game-card will-animate">
+        <img src="images/game-ludo.jpg" alt="Giant Ludo">
+        <div class="game-card-overlay"><span class="game-card-name">Ludo</span></div>
+      </div>
+      <div class="game-card will-animate">
+        <img src="images/game-jenga.jpg" alt="Giant Jenga">
+        <div class="game-card-overlay"><span class="game-card-name">Jenga</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="why-choose-section">
+    <h2 class="section-title">Why Choose Us</h2>
+    <div class="why-cards">
+      <div class="why-card will-animate">
+        <h4>India's Only Spatial Play Studio</h4>
+        <p>Cultural IP moat, no direct competitor. We are the category creators.</p>
+      </div>
+      <div class="why-card will-animate">
+        <h4>Data-Driven Insights</h4>
+        <p>Track play-based guest engagement metrics. Know what works, optimise constantly.</p>
+      </div>
+      <div class="why-card will-animate">
+        <h4>Recurring Revenue Model</h4>
+        <p>Assessment &rarr; Install &rarr; Subscription &rarr; Expansion. A partnership, not a one-time sale.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-section">
+    <h2 class="section-title">How It Works</h2>
+    <div class="steps-grid">
+      <div class="step-card will-animate">
+        <div class="step-num">01</div>
+        <div class="step-title">Assessment</div>
+        <div class="step-desc">Map spaces &amp; guest profile</div>
+      </div>
+      <div class="step-card will-animate">
+        <div class="step-num">02</div>
+        <div class="step-title">Installation</div>
+        <div class="step-desc">Heritage-matched fabrication</div>
+      </div>
+      <div class="step-card will-animate">
+        <div class="step-num">03</div>
+        <div class="step-title">Rotation</div>
+        <div class="step-desc">Fresh games every season</div>
+      </div>
+      <div class="step-card will-animate">
+        <div class="step-num">04</div>
+        <div class="step-title">Growth</div>
+        <div class="step-desc">Reviews up, phones down</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>&copy; 2026 Khel Khel Mein. India&rsquo;s only spatial play studio.</footer>
+</div><!-- /page-services -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE: CONTACT
+     FORMSPREE SETUP:
+       1. Sign up at https://formspree.io
+       2. Create a New Form, copy the ID (e.g. "xyzabcde")
+       3. Replace BOTH occurrences of YOUR_FORMSPREE_ID below:
+            - the <form action="..."> attribute (~line below)
+            - the FORMSPREE_ID variable in the <script>
+════════════════════════════════════════════════════════ -->
+<div id="page-contact" class="page">
+  <section class="contact-section">
+    <div class="contact-inner">
+      <h1 class="section-title">Let's Talk</h1>
+      <p class="contact-sub">Transform your resort into a destination for play</p>
+      <div class="contact-card">
+        <form id="contact-form"
+              action="https://formspree.io/f/mykvegpo"
+              method="POST"
+              onsubmit="handleSubmit(event)">
+
+          <div class="contact-row">
+            <div class="form-group">
+              <label for="f-name">Your Name</label>
+              <input type="text" id="f-name" name="name" placeholder="Vikram Singh" autocomplete="name" required />
+            </div>
+            <div class="form-group">
+              <label for="f-property">Property Name</label>
+              <input type="text" id="f-property" name="property" placeholder="The Heritage Palace" />
+            </div>
+          </div>
+
+          <div class="form-group form-spacer">
+            <label for="f-city">City</label>
+            <input type="text" id="f-city" name="city" placeholder="Jaipur" autocomplete="address-level2" />
+          </div>
+
+          <div class="form-group form-spacer">
+            <label for="f-email">Your Email</label>
+            <input type="email" id="f-email" name="email" placeholder="you@resort.com" autocomplete="email" required />
+          </div>
+
+          <div class="form-group form-spacer">
+            <label for="f-message">Tell us about your property</label>
+            <textarea id="f-message" name="message" placeholder="Number of rooms, key spaces (lawn, corridor, courtyard), current guest pain points..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submit-btn">Send Message</button>
+          <div class="form-status" id="form-status" role="alert"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+  <footer>&copy; 2026 Khel Khel Mein. India&rsquo;s only spatial play studio.</footer>
+</div><!-- /page-contact -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     JAVASCRIPT  — zero apostrophes inside JS strings
+════════════════════════════════════════════════════════ -->
+<script>
+  /* ── PAGE NAVIGATION ──────────────────────────────── */
+  function showPage(page) {
+    var pages    = document.querySelectorAll('.page');
+    var navItems = document.querySelectorAll('.nav-links a');
+
+    pages.forEach(function(p)    { p.classList.remove('active'); });
+    navItems.forEach(function(a) { a.classList.remove('active'); });
+
+    var targetPage = document.getElementById('page-' + page);
+    var targetNav  = document.getElementById('nav-'  + page);
+    if (targetPage) targetPage.classList.add('active');
+    if (targetNav)  targetNav.classList.add('active');
+
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    triggerObserver();
+  }
+
+  /* ── FORMSPREE ────────────────────────────────────────
+     Replace YOUR_FORMSPREE_ID with your real form ID.
+     Get it from https://formspree.io after creating a form.
+     Example ID: xyzabcde
+  ─────────────────────────────────────────────────────── */
+  var FORMSPREE_ID = 'mykvegpo';
+  var FORMSPREE_URL = 'https://formspree.io/f/' + FORMSPREE_ID;
+
+  function handleSubmit(ev) {
+    ev.preventDefault();
+
+    var nameVal    = document.getElementById('f-name').value.trim();
+    var propVal    = document.getElementById('f-property').value.trim();
+    var cityVal    = document.getElementById('f-city').value.trim();
+    var emailVal   = document.getElementById('f-email').value.trim();
+    var msgVal     = document.getElementById('f-message').value.trim();
+    var statusEl   = document.getElementById('form-status');
+    var btn        = document.getElementById('submit-btn');
+
+    /* validation */
+    if (!nameVal) {
+      setStatus(statusEl, 'error', 'Please enter your name.');
+      return;
+    }
+    var emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailVal || !emailRx.test(emailVal)) {
+      setStatus(statusEl, 'error', 'Please enter a valid email address.');
+      return;
+    }
+    if (!msgVal) {
+      setStatus(statusEl, 'error', 'Please tell us about your property.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    statusEl.className = 'form-status';
+
+    var payload = JSON.stringify({
+      name: nameVal, property: propVal,
+      city: cityVal, email: emailVal, message: msgVal
+    });
+
+    fetch(FORMSPREE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: payload
+    })
+    .then(function(res) {
+      if (res.ok) {
+        setStatus(statusEl, 'success', 'Message sent! We will reach out within 24 hours.');
+        document.getElementById('contact-form').reset();
+      } else {
+        setStatus(statusEl, 'error', 'Something went wrong. Please try again.');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Send Message';
+    })
+    .catch(function() {
+      setStatus(statusEl, 'error', 'Network error. Please check your connection.');
+      btn.disabled = false;
+      btn.textContent = 'Send Message';
+    });
+  }
+
+  function setStatus(el, type, msg) {
+    el.className = 'form-status ' + type;
+    el.textContent = msg;
+  }
+
+  /* ── SCROLL REVEAL ────────────────────────────────── */
+  var ioInstance = null;
+
+  function triggerObserver() {
+    if (ioInstance) { ioInstance.disconnect(); }
+
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.will-animate').forEach(function(el) {
+        el.classList.add('in-view');
+      });
+      return;
+    }
+
+    ioInstance = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          ioInstance.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.will-animate:not(.in-view)').forEach(function(el) {
+      ioInstance.observe(el);
+    });
+  }
+
+  /* run on initial page load */
+  triggerObserver();
+</script>
+
+</body>
+</html>
